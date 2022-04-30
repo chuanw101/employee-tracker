@@ -21,7 +21,7 @@ const init = async () => {
                 name: "choice",
                 message: "What would you like to do?",
                 choices: ["View all departments", "View all roles", "View all employees", "View employees by manager", "View employees by department", "Add a department", 
-                    "Add a role", "Add an employee", "Remove a department", "Remove a role", "Remove an employee", "Update an employee role", "Update an employee manager"],
+                    "Add a role", "Add an employee", "Remove a department", "Remove a role", "Remove an employee", "Update an employee role", "Update an employee manager", "View budget uti of department"],
             }
         ]);
         switch (ans.choice) {
@@ -70,6 +70,9 @@ const init = async () => {
                 break;
             case "Update an employee manager":
                 updateEmployeeManager();
+                break;
+            case "View budget uti of department":
+                viewDeptBudgetUti();
                 break;
         }
     } catch (err) {
@@ -380,6 +383,36 @@ const removeEmployee = async () => {
         // Remove the employee
         await db.query(`DELETE FROM employee WHERE CONCAT(first_name, ' ', last_name) = "${ans.emp}"`);
         console.log(`${ans.emp} was removed.`)
+        init();
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+const viewDeptBudgetUti = async () => {
+    try {
+        // get dept names and convert to array
+        const res = await db.query('SELECT name FROM department');
+        const dept = res[0].map(x => x.name);
+        // prompt user for dept name
+        const ans = await inquirer.prompt([
+            {
+                type: "list",
+                name: "name",
+                message: "Which department do you want to view total budget utilization?",
+                choices: dept,
+            }
+        ]);
+        // Get sum of all employee salary in that dept
+        const resSum = await db.query(`SELECT SUM(salary) FROM employee
+        LEFT JOIN role ON role_id = role.id LEFT JOIN department ON role.department_id = department.id
+        WHERE department.name = "${ans.name}"`);
+        const sum = resSum[0][0]['SUM(salary)'];
+        if (sum) {
+            console.log(`The total budget uti for ${ans.name} dept is $${sum}.`);
+        } else {
+            console.log(`The total budget uti for ${ans.name} dept is $0.`);
+        }
         init();
     } catch (err) {
         console.log(err);
