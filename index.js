@@ -19,7 +19,7 @@ const init = async () => {
                 type: "list",
                 name: "choice",
                 message: "What would you like to do?",
-                choices: ["View all departments", "View all roles", "View all employees", "Add a department", "Add a role", "Add an employee", "Update an employee role", "End"],
+                choices: ["View all departments", "View all roles", "View all employees", "Add a department", "Add a role", "Add an employee", "Update an employee role"],
             }
         ]);
         switch (ans.choice) {
@@ -49,7 +49,7 @@ const init = async () => {
                 addEmployee();
                 break;
             case "Update an employee role":
-
+                updateEmployeeRole();
                 break;
         }
     } catch (err) {
@@ -165,5 +165,60 @@ const addEmployee = async () => {
         console.log(err);
     }
 }
+
+const updateEmployeeRole = async () => {
+    try {
+        // get all title from role
+        const res = await db.query('SELECT title FROM role');
+        // convert array of objects to array of just strings of the titles
+        const titles = res[0].map(x => x.title);
+        // samething for names of employees
+        const res2 = await db.query('SELECT CONCAT (first_name, " ", last_name) AS name FROM employee');
+        const emps = res2[0].map(x => x.name);
+
+        // prompt user for info about new role
+        const ans = await inquirer.prompt([
+            {
+                type: "list",
+                name: "name",
+                message: "Which employee do you want to update role for?",
+                choices: emps,
+            },
+            {
+                type: "list",
+                name: "title",
+                message: "What's the employee's new title?",
+                choices: titles,
+            }
+        ]);
+        // get the role id with the title
+        const resTitle = await db.query(`SELECT id FROM role WHERE title = "${ans.title}"`);
+        const roleId = Number(resTitle[0][0].id);
+
+        // update new role id for the employee
+        await db.query(`UPDATE employee SET role_id = ${roleId} WHERE CONCAT(first_name, " ", last_name) = "${ans.name}"`);
+        console.log(`${ans.firstName} ${ans.lastName} added as a new employee.`);
+        init();
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+// ascii art
+console.log(`
+___                      _                         
+/ (_)                    | |                        
+\__    _  _  _       _   | |   __           _    _  
+/     / |/ |/ |    |/ \_ |/   /  \_ |   |  |/   |/  
+\___/   |  |  |_/  |__/  |__/ \__/   \_/|/ |__/ |__/
+                  /|                   /|           
+                  \|                   \|           
+ ______                      _                      
+(_) |                       | |                     
+    |    ,_     __,    __   | |    _    ,_          
+  _ |   /  |   /  |   /     |/_)  |/   /  |         
+ (_/       |_/ \_/|_/ \___/ | \_/ |__/    |_/       
+                                                
+`)
 
 init();
