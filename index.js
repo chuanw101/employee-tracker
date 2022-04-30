@@ -14,12 +14,13 @@ const db = mysql.createConnection(
 
 const init = async () => {
     try {
+        // prompt choices for user
         const ans = await inquirer.prompt([
             {
                 type: "list",
                 name: "choice",
                 message: "What would you like to do?",
-                choices: ["View all departments", "View all roles", "View all employees", "Add a department", "Add a role", "Add an employee", "Update an employee role"],
+                choices: ["View all departments", "View all roles", "View all employees", "Add a department", "Add a role", "Add an employee", "Update an employee role", "Update an employee manager"],
             }
         ]);
         switch (ans.choice) {
@@ -50,6 +51,9 @@ const init = async () => {
                 break;
             case "Update an employee role":
                 updateEmployeeRole();
+                break;
+            case "Update an employee manager":
+                updateEmployeeManager();
                 break;
         }
     } catch (err) {
@@ -204,7 +208,48 @@ const updateEmployeeRole = async () => {
     }
 }
 
-// ascii art
+const updateEmployeeManager = async () => {
+    try {
+        // get employee names and convert to array
+        const res = await db.query('SELECT CONCAT (first_name, " ", last_name) AS name FROM employee');
+        const emps = res[0].map(x => x.name);
+
+        // make copy of emps and add none for the managers array
+        const managers = [...emps];
+        managers.unshift("None");
+
+        // prompt user for info about new role
+        const ans = await inquirer.prompt([
+            {
+                type: "list",
+                name: "emp",
+                message: "Which employee do you want to update manager for?",
+                choices: emps,
+            },
+            {
+                type: "list",
+                name: "manager",
+                message: "Who's the new manager?",
+                choices: managers,
+            }
+        ]);
+        // check if manager is None, if null then manager id is null, otherwise get manager id with the name
+        let managerId = null;
+        if (ans.manager != "None") {
+            const resManager = await db.query(`SELECT id FROM employee WHERE CONCAT(first_name, ' ', last_name) = "${ans.manager}"`);
+            managerId = Number(resManager[0][0].id);
+        }
+
+        // update new role id for the employee
+        await db.query(`UPDATE employee SET manager_id = ${managerId} WHERE CONCAT(first_name, " ", last_name) = "${ans.emp}"`);
+        console.log(`${ans.emp}'s new manager is now ${ans.manager}.`);
+        init();
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+// ascii art upon start
 console.log(`
 ================================================================================
 /$$$$$$$$                         /$$                                        
