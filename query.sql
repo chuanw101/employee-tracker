@@ -1,1 +1,1 @@
-INSERT INTO role (title, salary, department_id) VALUES ("Janitor", 50000, 5)
+SELECT id FROM employee WHERE CONCAT(first_name, ' ', last_name) = "Ronny Cheryl"
