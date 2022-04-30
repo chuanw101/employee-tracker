@@ -20,7 +20,7 @@ const init = async () => {
                 type: "list",
                 name: "choice",
                 message: "What would you like to do?",
-                choices: ["View all departments", "View all roles", "View all employees", "Add a department", "Add a role", "Add an employee", "Update an employee role", "Update an employee manager"],
+                choices: ["View all departments", "View all roles", "View all employees", "View employees by manager", "Add a department", "Add a role", "Add an employee", "Update an employee role", "Update an employee manager"],
             }
         ]);
         switch (ans.choice) {
@@ -39,6 +39,9 @@ const init = async () => {
                     LEFT JOIN employee m ON e.manager_id = m.id LEFT JOIN role ON e.role_id = role.id LEFT JOIN department ON role.department_id = department.id`);
                 console.table(employees[0]);
                 init();
+                break;
+            case "View employees by manager":
+                viewEmployeeByManager();
                 break;
             case "Add a department":
                 addDept();
@@ -243,6 +246,41 @@ const updateEmployeeManager = async () => {
         // update new role id for the employee
         await db.query(`UPDATE employee SET manager_id = ${managerId} WHERE CONCAT(first_name, " ", last_name) = "${ans.emp}"`);
         console.log(`${ans.emp}'s new manager is now ${ans.manager}.`);
+        init();
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+
+const viewEmployeeByManager = async () => {
+    try {
+        // get employee names and convert to array
+        const res = await db.query('SELECT CONCAT (first_name, " ", last_name) AS name FROM employee');
+        const managers = res[0].map(x => x.name);
+        managers.unshift("None");
+
+        // prompt user for info about new role
+        const ans = await inquirer.prompt([
+            {
+                type: "list",
+                name: "manager",
+                message: "Which manager's employees would you like to see?",
+                choices: managers,
+            }
+        ]);
+        // check if manager is None, if null then manager id is null, otherwise get manager id with the name
+        let managerId = null;
+        if (ans.manager != "None") {
+            const resManager = await db.query(`SELECT id FROM employee WHERE CONCAT(first_name, ' ', last_name) = "${ans.manager}"`);
+            managerId = Number(resManager[0][0].id);
+        }
+
+        // Display all employees who are under that manager
+        const employees = await db.query(`SELECT e.id, e.first_name, e.last_name, title, name AS department, salary, CONCAT(m.first_name, ' ', m.last_name) AS manager FROM employee e
+            LEFT JOIN employee m ON e.manager_id = m.id LEFT JOIN role ON e.role_id = role.id LEFT JOIN department ON role.department_id = department.id
+            WHERE e.manager_id = ${managerId}`);
+        console.table(employees[0]);
         init();
     } catch (err) {
         console.log(err);
