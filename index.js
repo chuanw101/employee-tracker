@@ -260,8 +260,7 @@ const viewEmployeeByManager = async () => {
         // get employee names and convert to array
         const res = await db.query('SELECT CONCAT (first_name, " ", last_name) AS name FROM employee');
         const managers = res[0].map(x => x.name);
-
-        // prompt user for info about new role
+        // prompt user for manager name
         const ans = await inquirer.prompt([
             {
                 type: "list",
@@ -270,14 +269,10 @@ const viewEmployeeByManager = async () => {
                 choices: managers,
             }
         ]);
-        // check if manager is None, if null then manager id is null, otherwise get manager id with the name
-        const resManager = await db.query(`SELECT id FROM employee WHERE CONCAT(first_name, ' ', last_name) = "${ans.manager}"`);
-        const managerId = Number(resManager[0][0].id);
-
         // Display all employees who are under that manager
         const employees = await db.query(`SELECT e.id, e.first_name, e.last_name, title, name AS department, salary, CONCAT(m.first_name, ' ', m.last_name) AS manager FROM employee e
             LEFT JOIN employee m ON e.manager_id = m.id LEFT JOIN role ON e.role_id = role.id LEFT JOIN department ON role.department_id = department.id
-            WHERE e.manager_id = ${managerId}`);
+            WHERE CONCAT(m.first_name, ' ', m.last_name) = "${ans.manager}"`);
         console.table(employees[0]);
         init();
     } catch (err) {
@@ -291,8 +286,7 @@ const viewEmployeeByDept = async () => {
         const res = await db.query('SELECT name FROM department');
         // convert array of objects to array of just strings of the names
         const dept = res[0].map(x => x.name);
-
-        // prompt user for info about new role
+        // prompt user for dept to show employees
         const ans = await inquirer.prompt([
             {
                 type: "list",
@@ -301,14 +295,10 @@ const viewEmployeeByDept = async () => {
                 choices: dept,
             }
         ]);
-        // Get the department id from the department name
-        const resDept = await db.query(`SELECT id FROM department WHERE name = "${ans.dept}"`);
-        const deptId = Number(resDept[0][0].id);
-
-        // Display all employees who are under that manager
+        // Display all employees who are in the dept
         const employees = await db.query(`SELECT e.id, e.first_name, e.last_name, title, name AS department, salary, CONCAT(m.first_name, ' ', m.last_name) AS manager FROM employee e
             LEFT JOIN employee m ON e.manager_id = m.id LEFT JOIN role ON e.role_id = role.id LEFT JOIN department ON role.department_id = department.id
-            WHERE role.department_id = ${deptId}`);
+            WHERE department.name = "${ans.dept}"`);
         console.table(employees[0]);
         init();
     } catch (err) {
