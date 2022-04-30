@@ -316,12 +316,59 @@ const viewEmployeeByDept = async () => {
     }
 }
 
+const removeDept = async () => {
+    try {
+        // get dept names and convert to array
+        const res = await db.query('SELECT name FROM department');
+        const dept = res[0].map(x => x.name);
+        // prompt user for dept name
+        const ans = await inquirer.prompt([
+            {
+                type: "list",
+                name: "name",
+                message: "Which department do you want to remove?",
+                choices: dept,
+            }
+        ]);
+        // Remove dept
+        await db.query(`DELETE FROM department WHERE name = "${ans.name}"`);
+        console.log(`${ans.name} was removed.`)
+        init();
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+const removeRole = async () => {
+    try {
+        // get role titles and convert to array
+        const res = await db.query('SELECT title FROM role');
+        const roles = res[0].map(x => x.title);
+        console.log(roles);
+        // prompt user for title
+        const ans = await inquirer.prompt([
+            {
+                type: "list",
+                name: "name",
+                message: "Which department do you want to remove?",
+                choices: roles,
+            }
+        ]);
+        // Remove that role
+        await db.query(`DELETE FROM role WHERE title = "${ans.name}"`);
+        console.log(`${ans.name} was removed.`)
+        init();
+    } catch (err) {
+        console.log(err);
+    }
+}
+
 const removeEmployee = async () => {
     try {
         // get employee names and convert to array
         const res = await db.query('SELECT CONCAT (first_name, " ", last_name) AS name FROM employee');
         const emps = res[0].map(x => x.name);
-        // prompt user for manager name
+        // prompt user for emp name
         const ans = await inquirer.prompt([
             {
                 type: "list",
@@ -330,7 +377,7 @@ const removeEmployee = async () => {
                 choices: emps,
             }
         ]);
-        // Display all employees who are under that manager
+        // Remove the employee
         await db.query(`DELETE FROM employee WHERE CONCAT(first_name, ' ', last_name) = "${ans.emp}"`);
         console.log(`${ans.emp} was removed.`)
         init();
