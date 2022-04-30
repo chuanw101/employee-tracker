@@ -258,7 +258,6 @@ const viewEmployeeByManager = async () => {
         // get employee names and convert to array
         const res = await db.query('SELECT CONCAT (first_name, " ", last_name) AS name FROM employee');
         const managers = res[0].map(x => x.name);
-        managers.unshift("None");
 
         // prompt user for info about new role
         const ans = await inquirer.prompt([
@@ -270,11 +269,8 @@ const viewEmployeeByManager = async () => {
             }
         ]);
         // check if manager is None, if null then manager id is null, otherwise get manager id with the name
-        let managerId = null;
-        if (ans.manager != "None") {
-            const resManager = await db.query(`SELECT id FROM employee WHERE CONCAT(first_name, ' ', last_name) = "${ans.manager}"`);
-            managerId = Number(resManager[0][0].id);
-        }
+        const resManager = await db.query(`SELECT id FROM employee WHERE CONCAT(first_name, ' ', last_name) = "${ans.manager}"`);
+        const managerId = Number(resManager[0][0].id);
 
         // Display all employees who are under that manager
         const employees = await db.query(`SELECT e.id, e.first_name, e.last_name, title, name AS department, salary, CONCAT(m.first_name, ' ', m.last_name) AS manager FROM employee e
