@@ -20,7 +20,8 @@ const init = async () => {
                 type: "list",
                 name: "choice",
                 message: "What would you like to do?",
-                choices: ["View all departments", "View all roles", "View all employees", "View employees by manager", "View employees by department", "Add a department", "Add a role", "Add an employee", "Update an employee role", "Update an employee manager"],
+                choices: ["View all departments", "View all roles", "View all employees", "View employees by manager", "View employees by department", "Add a department", 
+                    "Add a role", "Add an employee", "Remove a department", "Remove a role", "Remove an employee", "Update an employee role", "Update an employee manager"],
             }
         ]);
         switch (ans.choice) {
@@ -54,6 +55,15 @@ const init = async () => {
                 break;
             case "Add an employee":
                 addEmployee();
+                break;
+            case "Remove a department":
+                removeDept();
+                break;
+            case "Remove a role":
+                removeRole();
+                break;
+            case "Remove an employee":
+                removeEmployee();
                 break;
             case "Update an employee role":
                 updateEmployeeRole();
@@ -300,6 +310,29 @@ const viewEmployeeByDept = async () => {
             LEFT JOIN employee m ON e.manager_id = m.id LEFT JOIN role ON e.role_id = role.id LEFT JOIN department ON role.department_id = department.id
             WHERE department.name = "${ans.dept}"`);
         console.table(employees[0]);
+        init();
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+const removeEmployee = async () => {
+    try {
+        // get employee names and convert to array
+        const res = await db.query('SELECT CONCAT (first_name, " ", last_name) AS name FROM employee');
+        const emps = res[0].map(x => x.name);
+        // prompt user for manager name
+        const ans = await inquirer.prompt([
+            {
+                type: "list",
+                name: "emp",
+                message: "Which employee do you want to remove?",
+                choices: emps,
+            }
+        ]);
+        // Display all employees who are under that manager
+        await db.query(`DELETE FROM employee WHERE CONCAT(first_name, ' ', last_name) = "${ans.emp}"`);
+        console.log(`${ans.emp} was removed.`)
         init();
     } catch (err) {
         console.log(err);
