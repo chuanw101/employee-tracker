@@ -1,0 +1,1 @@
+INSERT INTO role (title, salary, department_id) VALUES ("Janitor", 50000, 5)
