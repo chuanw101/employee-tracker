@@ -20,7 +20,7 @@ const init = async () => {
                 type: "list",
                 name: "choice",
                 message: "What would you like to do?",
-                choices: ["View all departments", "View all roles", "View all employees", "View employees by manager", "Add a department", "Add a role", "Add an employee", "Update an employee role", "Update an employee manager"],
+                choices: ["View all departments", "View all roles", "View all employees", "View employees by manager", "View employees by department", "Add a department", "Add a role", "Add an employee", "Update an employee role", "Update an employee manager"],
             }
         ]);
         switch (ans.choice) {
@@ -42,6 +42,9 @@ const init = async () => {
                 break;
             case "View employees by manager":
                 viewEmployeeByManager();
+                break;
+            case "View employees by department":
+                viewEmployeeByDept();
                 break;
             case "Add a department":
                 addDept();
@@ -252,7 +255,6 @@ const updateEmployeeManager = async () => {
     }
 }
 
-
 const viewEmployeeByManager = async () => {
     try {
         // get employee names and convert to array
@@ -276,6 +278,37 @@ const viewEmployeeByManager = async () => {
         const employees = await db.query(`SELECT e.id, e.first_name, e.last_name, title, name AS department, salary, CONCAT(m.first_name, ' ', m.last_name) AS manager FROM employee e
             LEFT JOIN employee m ON e.manager_id = m.id LEFT JOIN role ON e.role_id = role.id LEFT JOIN department ON role.department_id = department.id
             WHERE e.manager_id = ${managerId}`);
+        console.table(employees[0]);
+        init();
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+const viewEmployeeByDept = async () => {
+    try {
+        // get all dept names from department
+        const res = await db.query('SELECT name FROM department');
+        // convert array of objects to array of just strings of the names
+        const dept = res[0].map(x => x.name);
+
+        // prompt user for info about new role
+        const ans = await inquirer.prompt([
+            {
+                type: "list",
+                name: "dept",
+                message: "Which department's employees would you like to see?",
+                choices: dept,
+            }
+        ]);
+        // Get the department id from the department name
+        const resDept = await db.query(`SELECT id FROM department WHERE name = "${ans.dept}"`);
+        const deptId = Number(resDept[0][0].id);
+
+        // Display all employees who are under that manager
+        const employees = await db.query(`SELECT e.id, e.first_name, e.last_name, title, name AS department, salary, CONCAT(m.first_name, ' ', m.last_name) AS manager FROM employee e
+            LEFT JOIN employee m ON e.manager_id = m.id LEFT JOIN role ON e.role_id = role.id LEFT JOIN department ON role.department_id = department.id
+            WHERE role.department_id = ${deptId}`);
         console.table(employees[0]);
         init();
     } catch (err) {
