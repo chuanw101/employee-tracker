@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
   },
   "repository": {
     "type": "git",
@@ -18,9 +19,7 @@
   },
   "homepage": "https://github.com/chuanw101/employee-tracker#readme",
   "dependencies": {
-    "i": "^0.3.7",
     "inquirer": "^8.2.4",
-    "mysql2": "^2.3.3",
-    "npm": "^8.8.0"
+    "mysql2": "^2.3.3"
   }
 }
